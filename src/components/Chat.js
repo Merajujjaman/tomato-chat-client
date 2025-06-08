@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import "./Chat.css";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://tomato-chat-server.onrender.com");
 
 // Helper to get/set userId (or username) in localStorage
 function getUserId() {

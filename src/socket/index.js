@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000"); // Adjust the URL as needed
+const socket = io("https://tomato-chat-server.onrender.com"); // Adjust the URL as needed
+// const socket = io("https://tomato-chat-server.onrender.com"); // Adjust the URL as needed
 
 export const sendMessage = (message) => {
     socket.emit("sendMessage", message);
