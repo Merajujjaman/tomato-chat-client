@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
+import "./AuthForm.css";
 
-function Login({ onLogin }) {
+function Login({ onLogin, onShowRegister }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
 
@@ -16,6 +17,7 @@ function Login({ onLogin }) {
       const res = await axios.post("https://tomato-chat-server.onrender.com/api/auth/login", form);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
+      localStorage.setItem("userId", res.data.userId);
       onLogin();
     } catch (err) {
       setError(err.response?.data?.error || "Login failed");
@@ -23,13 +25,32 @@ function Login({ onLogin }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Login</h2>
-      <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required />
-      <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required />
-      <button type="submit">Login</button>
-      {error && <div style={{color:"red"}}>{error}</div>}
-    </form>
+    <div className="auth-form-container">
+      <div className="auth-form-title">Login</div>
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+        {error && <div className="auth-error">{error}</div>}
+        <button type="submit">Login</button>
+      </form>
+      <button className="auth-link" type="button" onClick={onShowRegister}>
+        No account? Register
+      </button>
+    </div>
   );
 }
 

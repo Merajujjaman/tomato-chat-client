@@ -1,74 +1,126 @@
-import React, { useState, useEffect, useRef } from "react";
-import io from "socket.io-client";
+import React, { useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
+import Spinner from "./Spinner";
 import "./Chat.css";
 
-const socket = io("https://tomato-chat-server.onrender.com");
-
-// Helper to get/set userId (or username) in localStorage
-function getUserId() {
-  let userId = localStorage.getItem("userId");
-  if (!userId) {
-    userId = prompt("Enter your username or user ID:");
-    if (!userId) userId = Math.random().toString(36).substr(2, 9);
-    localStorage.setItem("userId", userId);
-  }
-  return userId;
-}
-const myId = getUserId();
-
-function Chat() {
-  const [message, setMessage] = useState("");
+function Chat({ selectedUser, onBack, isMobile }) {
+  const myId = localStorage.getItem("userId");
+  const myName = localStorage.getItem("username");
   const [messages, setMessages] = useState([]);
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
+  const socketRef = useRef();
 
   useEffect(() => {
-    socket.on("chat history", (msgs) => {
-      setMessages(msgs);
+    setLoading(true);
+    socketRef.current = io("https://tomato-chat-server.onrender.com", {
+      query: { userId: myId },
     });
 
-    socket.on("chat message", (msg) => {
-      setMessages((prev) => [...prev, msg]);
+    socketRef.current.emit("get history", {
+      userId: myId,
+      otherUserId: selectedUser._id,
+    });
+
+    socketRef.current.on("chat history", (msgs) => {
+      setMessages(msgs);
+      setLoading(false);
+    });
+
+    socketRef.current.on("private message", (msg) => {
+      if (
+        (msg.sender === myId && msg.receiver === selectedUser._id) ||
+        (msg.sender === selectedUser._id && msg.receiver === myId)
+      ) {
+        setMessages((prev) => [...prev, msg]);
+      }
     });
 
     return () => {
-      socket.off("chat message");
-      socket.off("chat history");
+      socketRef.current.disconnect();
     };
-  }, []);
+  }, [selectedUser, myId]);
 
-  // Scroll to bottom on new message
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!loading && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loading]);
 
   const sendMessage = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      socket.emit("chat message", { text: message, sender: myId });
+      socketRef.current.emit("private message", {
+        text: message,
+        sender: myId,
+        receiver: selectedUser._id,
+      });
       setMessage("");
     }
   };
 
   return (
     <div className="chat-container">
-      {/* Header */}
-      <div className="chat-header">Tomato Chat</div>
+      {/* Header with back arrow on mobile */}
+      <div className="chat-header">
+        <button
+          onClick={onBack}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#fff",
+            fontSize: 22,
+            marginRight: 10,
+            cursor: "pointer",
+          }}
+          aria-label="Back"
+        >
+          &#8592;
+        </button>
+        <img
+          src={`https://ui-avatars.com/api/?name=${selectedUser.username}&background=25d366&color=fff&rounded=true&size=32`}
+          alt={selectedUser.username}
+          style={{
+            borderRadius: "50%",
+            verticalAlign: "middle",
+            marginRight: 8,
+          }}
+        />
+        {selectedUser.username}
+      </div>
       {/* Messages */}
-      <div className="chat-messages">
-        {messages.map((msg, idx) => {
-          const text = typeof msg === "string" ? msg : msg.text;
-          const sender = typeof msg === "string" ? "" : msg.sender;
-          return (
+      {loading ? (
+        <Spinner />
+      ) : (
+        <div className="chat-messages">
+          {messages.map((msg, idx) => (
             <div
               key={msg._id || idx}
-              className={`chat-bubble ${sender === myId ? "self" : "other"}`}
+              className={`chat-bubble ${
+                msg.sender === myId ? "self" : "other"
+              }`}
+              title={new Date(msg.createdAt).toLocaleString()}
             >
-              {text}
+              {msg.text}
+              <div
+                style={{
+                  fontSize: "0.7em",
+                  color: "#888",
+                  marginTop: 2,
+                  textAlign: "right",
+                }}
+              >
+                {new Date(msg.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
             </div>
-          );
-        })}
-        <div ref={messagesEndRef} />
-      </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      )}
       {/* Input */}
       <form
         onSubmit={sendMessage}
