@@ -9,7 +9,8 @@ function Login({ onLogin, onShowRegister }) {
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-
+  
+  console.log(form);
   const handleSubmit = async e => {
     e.preventDefault();
     setError("");
@@ -18,8 +19,10 @@ function Login({ onLogin, onShowRegister }) {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("userId", res.data.userId);
+      console.log(res);
       onLogin();
     } catch (err) {
+      console.log(err);
       setError(err.response?.data?.error || "Login failed");
     }
   };
