@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import Spinner from "./Spinner";
 import "./Chat.css";
+import { fetchMessages, sendMessage as apiSendMessage } from "../services/api";
 
 function Chat({ selectedUser, onBack, isMobile }) {
   const myId = localStorage.getItem("userId");
@@ -14,6 +15,15 @@ function Chat({ selectedUser, onBack, isMobile }) {
 
   useEffect(() => {
     setLoading(true);
+
+    // Fetch messages from REST API
+    fetchMessages(myId, selectedUser._id)
+      .then((msgs) => {
+        setMessages(msgs);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+
     socketRef.current = io("https://tomato-chat-server.onrender.com", {
       query: { userId: myId },
     });
@@ -38,7 +48,11 @@ function Chat({ selectedUser, onBack, isMobile }) {
     });
 
     return () => {
-      socketRef.current.disconnect();
+      if (socketRef.current) {
+        socketRef.current.off("chat history");
+        socketRef.current.off("private message");
+        socketRef.current.disconnect();
+      }
     };
   }, [selectedUser, myId]);
 

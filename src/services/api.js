@@ -1,10 +1,14 @@
 import axios from 'axios';
 
-const API_URL = 'https://tomato-chat-server.onrender.com/api'; // Adjust the URL as needed
+const API_URL = 'https://tomato-chat-server.onrender.com/api'; // Adjust if needed
 
-export const fetchMessages = async () => {
+export const fetchMessages = async (userId, otherUserId) => {
     try {
-        const response = await axios.get(`${API_URL}/messages`);
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+            `${API_URL}/messages?userId=${userId}&otherUserId=${otherUserId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
         return response.data;
     } catch (error) {
         console.error('Error fetching messages:', error);
@@ -14,7 +18,12 @@ export const fetchMessages = async () => {
 
 export const sendMessage = async (messageData) => {
     try {
-        const response = await axios.post(`${API_URL}/messages`, messageData);
+        const token = localStorage.getItem("token");
+        const response = await axios.post(
+            `${API_URL}/messages`,
+            messageData,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
         return response.data;
     } catch (error) {
         console.error('Error sending message:', error);
