@@ -24,7 +24,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
       })
       .catch(() => setLoading(false));
 
-    socketRef.current = io("https://tomato-chat-server.onrender.com", {
+    socketRef.current = io("https://tomato-chat-server-y4uh.onrender.com", {
       query: { userId: myId },
     });
 

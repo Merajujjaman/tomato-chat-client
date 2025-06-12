@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://tomato-chat-server.onrender.com/api'; // Adjust if needed
+const API_URL = 'https://tomato-chat-server-y4uh.onrender.com/api'; // Adjust if needed
 
 export const fetchMessages = async (userId, otherUserId) => {
     try {
