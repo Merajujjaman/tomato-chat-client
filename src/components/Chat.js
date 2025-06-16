@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
+import { sendMessage as apiSendMessage } from "../services/api";
+import io from "socket.io-client";
 import Spinner from "./Spinner";
 import "./Chat.css";
-import { fetchMessages, sendMessage as apiSendMessage } from "../services/api";
+import { fetchMessages } from "../services/api";
 
 function Chat({ selectedUser, onBack, isMobile }) {
   const myId = localStorage.getItem("userId");
@@ -24,6 +25,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
       })
       .catch(() => setLoading(false));
 
+    // Create socket connection
     socketRef.current = io("https://tomato-chat-server-y4uh.onrender.com", {
       query: { userId: myId },
     });
@@ -64,29 +66,22 @@ function Chat({ selectedUser, onBack, isMobile }) {
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    console.log("Send handler called");
     if (message.trim()) {
-      try {
-        await apiSendMessage({
-          content: message,
-          sender: myId,
-          receiver: selectedUser._id,
-        });
+      // 1. Save to backend (REST API)
+      const savedMessage = await apiSendMessage({
+        content: message,
+        sender: myId,
+        receiver: selectedUser._id,
+      });
 
-        socketRef.current.emit("private message", {
-          content: message,
-          sender: myId,
-          receiver: selectedUser._id,
-        });
-
-        setMessage("");
-      } catch (err) {
-        console.error("Failed to send message:", err);
+      // 2. Emit via socket (use socketRef.current)
+      if (socketRef.current) {
+        socketRef.current.emit("private message", savedMessage);
       }
+
+      setMessage("");
     }
   };
-
-  // console.log("Messages to render:", messages);
 
   return (
     <div className="chat-container">
