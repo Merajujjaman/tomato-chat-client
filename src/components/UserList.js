@@ -9,7 +9,7 @@ function UserList({ onSelect, selectedUserId, onLogout }) {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/auth/users", {
+      .get("https://tomato-chat-server-y4uh.onrender.com/api/auth/users", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
       .then((res) => setUsers(res.data));

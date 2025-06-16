@@ -15,7 +15,7 @@ export async function subscribeUserToPush() {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
     // Send this subscription object to your backend and associate it with the logged-in user
-    await fetch('http://localhost:5000/api/subscribe', {
+    await fetch('https://tomato-chat-server-y4uh.onrender.com/api/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
