@@ -8,11 +8,12 @@ import "./Chat.css";
 
 function Chat({ selectedUser, onBack, isMobile }) {
   const myId = localStorage.getItem("userId");
-  const myName = localStorage.getItem("username");
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [typingUsers, setTypingUsers] = useState([]);
   const socketRef = useRef();
+  const typingTimeoutRef = useRef();
 
   useEffect(() => {
     setLoading(true);
@@ -37,13 +38,34 @@ function Chat({ selectedUser, onBack, isMobile }) {
       }
     });
 
+    // Typing indicator listeners
+    socketRef.current.on("typing", ({ from }) => {
+      setTypingUsers((prev) => [...new Set([...prev, from])]);
+    });
+    socketRef.current.on("stop typing", ({ from }) => {
+      setTypingUsers((prev) => prev.filter((id) => id !== from));
+    });
+
     return () => {
       if (socketRef.current) {
         socketRef.current.off("private message");
+        socketRef.current.off("typing");
+        socketRef.current.off("stop typing");
         socketRef.current.disconnect();
       }
     };
   }, [selectedUser, myId]);
+
+  const handleInputChange = (e) => {
+    setMessage(e.target.value);
+    if (socketRef.current) {
+      socketRef.current.emit("typing", { to: selectedUser._id });
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        socketRef.current.emit("stop typing", { to: selectedUser._id });
+      }, 2000); // 2 seconds
+    }
+  };
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -56,6 +78,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
 
       if (socketRef.current) {
         socketRef.current.emit("private message", savedMessage);
+        socketRef.current.emit("stop typing", { to: selectedUser._id });
       }
 
       setMessage("");
@@ -93,9 +116,27 @@ function Chat({ selectedUser, onBack, isMobile }) {
       {loading ? (
         <Spinner />
       ) : (
-        <ChatWindow messages={messages} myId={myId} loading={loading} />
+        <>
+          <ChatWindow messages={messages} myId={myId} loading={loading} />
+          {typingUsers.includes(selectedUser._id) && (
+            <div className="typing-indicator-premium">
+              <span style={{ fontWeight: 500 }}>{selectedUser.username}</span>
+              <span>is typing</span>
+              <span className="typing-dots">
+                <span className="typing-dot"></span>
+                <span className="typing-dot"></span>
+                <span className="typing-dot"></span>
+              </span>
+            </div>
+          )}
+        </>
       )}
-      <ChatInput message={message} setMessage={setMessage} onSend={sendMessage} />
+      <ChatInput
+        message={message}
+        setMessage={setMessage}
+        onSend={sendMessage}
+        onInputChange={handleInputChange}
+      />
     </div>
   );
 }
