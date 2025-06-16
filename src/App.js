@@ -9,20 +9,23 @@ const VAPID_PUBLIC_KEY = "BAXfolXTd28T2dqg6qY0bw7KANZQGs4THhP6hYR96SAHCIQDzv_SLy
 
 export async function subscribeUserToPush() {
   if ('serviceWorker' in navigator && 'PushManager' in window) {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
-    // Send this subscription object to your backend and associate it with the logged-in user
-    await fetch('https://tomato-chat-server-y4uh.onrender.com/api/subscribe', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-      body: JSON.stringify({ subscription })
-    });
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+      await fetch('https://tomato-chat-server-y4uh.onrender.com/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({ subscription })
+      });
+    } catch (err) {
+      console.warn("Push subscription failed:", err);
+    }
   }
 }
 
