@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { sendMessage as apiSendMessage } from "../services/api";
+import { sendMessage as apiSendMessage, fetchMessages } from "../services/api";
 import io from "socket.io-client";
 import Spinner from "./Spinner";
+import ChatWindow from "./ChatWindow";
+import ChatInput from "./ChatInput";
 import "./Chat.css";
-import { fetchMessages } from "../services/api";
 
 function Chat({ selectedUser, onBack, isMobile }) {
   const myId = localStorage.getItem("userId");
@@ -11,13 +12,11 @@ function Chat({ selectedUser, onBack, isMobile }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef(null);
   const socketRef = useRef();
 
   useEffect(() => {
     setLoading(true);
 
-    // Fetch messages from REST API
     fetchMessages(myId, selectedUser._id)
       .then((msgs) => {
         setMessages(msgs);
@@ -25,19 +24,8 @@ function Chat({ selectedUser, onBack, isMobile }) {
       })
       .catch(() => setLoading(false));
 
-    // Create socket connection
     socketRef.current = io("https://tomato-chat-server-y4uh.onrender.com", {
       query: { userId: myId },
-    });
-
-    socketRef.current.emit("get history", {
-      userId: myId,
-      otherUserId: selectedUser._id,
-    });
-
-    socketRef.current.on("chat history", (msgs) => {
-      setMessages(msgs);
-      setLoading(false);
     });
 
     socketRef.current.on("private message", (msg) => {
@@ -51,30 +39,21 @@ function Chat({ selectedUser, onBack, isMobile }) {
 
     return () => {
       if (socketRef.current) {
-        socketRef.current.off("chat history");
         socketRef.current.off("private message");
         socketRef.current.disconnect();
       }
     };
   }, [selectedUser, myId]);
 
-  useEffect(() => {
-    if (!loading && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, loading]);
-
   const sendMessage = async (e) => {
     e.preventDefault();
     if (message.trim()) {
-      // 1. Save to backend (REST API)
       const savedMessage = await apiSendMessage({
         content: message,
         sender: myId,
         receiver: selectedUser._id,
       });
 
-      // 2. Emit via socket (use socketRef.current)
       if (socketRef.current) {
         socketRef.current.emit("private message", savedMessage);
       }
@@ -85,7 +64,6 @@ function Chat({ selectedUser, onBack, isMobile }) {
 
   return (
     <div className="chat-container">
-      {/* Header with back arrow on mobile */}
       <div className="chat-header">
         <button
           onClick={onBack}
@@ -112,56 +90,12 @@ function Chat({ selectedUser, onBack, isMobile }) {
         />
         {selectedUser.username}
       </div>
-      {/* Messages */}
       {loading ? (
         <Spinner />
       ) : (
-        <div className="chat-messages">
-          {messages.map((msg, idx) => (
-            <div
-              key={msg._id || idx}
-              className={`chat-bubble ${
-                msg.sender === myId ? "self" : "other"
-              }`}
-              title={new Date(msg.createdAt).toLocaleString()}
-            >
-              {/* Show content if available, otherwise fallback to text */}
-              {msg.content || msg.text}
-              <div
-                style={{
-                  fontSize: "0.7em",
-                  color: "#888",
-                  marginTop: 2,
-                  textAlign: "right",
-                }}
-              >
-                {msg.createdAt &&
-                  new Date(msg.createdAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+        <ChatWindow messages={messages} myId={myId} loading={loading} />
       )}
-      {/* Input */}
-      <form
-        onSubmit={sendMessage}
-        className="chat-input-area"
-        autoComplete="off"
-      >
-        <input
-          className="chat-input"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message..."
-        />
-        <button className="chat-send" type="submit">
-          Send
-        </button>
-      </form>
+      <ChatInput message={message} setMessage={setMessage} onSend={sendMessage} />
     </div>
   );
 }
