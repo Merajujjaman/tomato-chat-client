@@ -24,7 +24,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
       })
       .catch(() => setLoading(false));
 
-    socketRef.current = io("https://tomato-chat-server-y4uh.onrender.com", {
+    socketRef.current = io("http://localhost:5000", {
       query: { userId: myId },
     });
 
@@ -62,17 +62,31 @@ function Chat({ selectedUser, onBack, isMobile }) {
     }
   }, [messages, loading]);
 
-  const sendMessage = (e) => {
+  const sendMessage = async (e) => {
     e.preventDefault();
+    console.log("Send handler called");
     if (message.trim()) {
-      socketRef.current.emit("private message", {
-        text: message,
-        sender: myId,
-        receiver: selectedUser._id,
-      });
-      setMessage("");
+      try {
+        await apiSendMessage({
+          content: message,
+          sender: myId,
+          receiver: selectedUser._id,
+        });
+
+        socketRef.current.emit("private message", {
+          content: message,
+          sender: myId,
+          receiver: selectedUser._id,
+        });
+
+        setMessage("");
+      } catch (err) {
+        console.error("Failed to send message:", err);
+      }
     }
   };
+
+  // console.log("Messages to render:", messages);
 
   return (
     <div className="chat-container">
@@ -116,7 +130,8 @@ function Chat({ selectedUser, onBack, isMobile }) {
               }`}
               title={new Date(msg.createdAt).toLocaleString()}
             >
-              {msg.text}
+              {/* Show content if available, otherwise fallback to text */}
+              {msg.content || msg.text}
               <div
                 style={{
                   fontSize: "0.7em",
@@ -125,10 +140,11 @@ function Chat({ selectedUser, onBack, isMobile }) {
                   textAlign: "right",
                 }}
               >
-                {new Date(msg.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {msg.createdAt &&
+                  new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
               </div>
             </div>
           ))}
