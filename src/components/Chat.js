@@ -111,7 +111,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
             marginRight: 8,
           }}
         />
-        {selectedUser.username}
+        {selectedUser.username};
       </div>
       {loading ? (
         <Spinner />

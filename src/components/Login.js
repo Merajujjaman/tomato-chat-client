@@ -18,7 +18,7 @@ function Login({ onLogin, onShowRegister }) {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("userId", res.data.userId);
-      console.log(res);
+      // console.log(res);
       onLogin();
     } catch (err) {
       console.log(err);
