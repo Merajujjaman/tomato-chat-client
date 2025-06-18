@@ -1,0 +1,113 @@
+.chat-input-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.chat-input:focus {
+  border-color: #25d366;
+}
+
+.image-upload-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.image-upload-btn:hover {
+  background-color: #f0f0f0;
+}
+
+/* Modern floating action send button */
+.chat-send-fab {
+  background: #25d366;
+  color: white;
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(34, 139, 34, 0.15);
+  font-size: 20px;
+  margin-left: 6px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  outline: none;
+  position: relative;
+}
+
+.chat-send-fab:hover, .chat-send-fab:focus {
+  background: #128c7e;
+  box-shadow: 0 4px 16px rgba(34, 139, 34, 0.22);
+  transform: translateY(-2px) scale(1.05);
+}
+
+.chat-send-fab:active {
+  background: #0e5e4a;
+  transform: scale(0.97);
+}
+
+.chat-send-fab:disabled {
+  background: #ccc;
+  color: #eee;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.chat-send-fab svg {
+  display: block;
+}
+
+/* Remove old .chat-send style if not used */
+.chat-send {
+  display: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .chat-input-area {
+    padding: 8px 12px;
+    gap: 6px;
+  }
+  
+  .chat-input {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  
+  .image-upload-btn {
+    font-size: 18px;
+    padding: 6px;
+    min-width: 32px;
+    height: 32px;
+  }
+  
+  .chat-send {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+} 

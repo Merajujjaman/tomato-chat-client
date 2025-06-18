@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { sendMessage as apiSendMessage, fetchMessages } from "../services/api";
+import { sendMessage as apiSendMessage, fetchMessages, uploadImage } from "../services/api";
 import io from "socket.io-client";
 import Spinner from "./Spinner";
 import ChatWindow from "./ChatWindow";
@@ -11,6 +11,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
   const socketRef = useRef();
   const typingTimeoutRef = useRef();
@@ -85,6 +86,23 @@ function Chat({ selectedUser, onBack, isMobile }) {
     }
   };
 
+  const handleImageSelect = async (imageFile) => {
+    setUploading(true);
+    try {
+      const savedMessage = await uploadImage(imageFile, selectedUser._id, message);
+      if (socketRef.current) {
+        socketRef.current.emit("private message", savedMessage);
+        socketRef.current.emit("stop typing", { to: selectedUser._id });
+      }
+      setMessage("");
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="chat-container">
       <div className="chat-header">
@@ -111,7 +129,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
             marginRight: 8,
           }}
         />
-        {selectedUser.username};
+        {selectedUser.username}
       </div>
       {loading ? (
         <Spinner />
@@ -136,7 +154,14 @@ function Chat({ selectedUser, onBack, isMobile }) {
         setMessage={setMessage}
         onSend={sendMessage}
         onInputChange={handleInputChange}
+        onImageSelect={handleImageSelect}
       />
+      {uploading && (
+        <div className="upload-indicator">
+          <div className="upload-spinner"></div>
+          <span>Uploading image...</span>
+        </div>
+      )}
     </div>
   );
 }

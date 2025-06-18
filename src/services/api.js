@@ -38,4 +38,26 @@ export const sendMessage = async (messageData) => {
   return response.data;
 };
 
+export const uploadImage = async (imageFile, receiverId, content = '') => {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append('image', imageFile);
+  formData.append('receiver', receiverId);
+  if (content) {
+    formData.append('content', content);
+  }
+
+  const response = await api.post(
+    '/upload-image',
+    formData,
+    { 
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      } 
+    }
+  );
+  return response.data;
+};
+
 // Add other API functions as needed
