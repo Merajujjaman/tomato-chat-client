@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { sendMessage as apiSendMessage, fetchMessages, uploadImage } from "../services/api";
+import { sendMessage as apiSendMessage, fetchMessages, uploadImage, markMessagesAsRead } from "../services/api";
 import io from "socket.io-client";
 import Spinner from "./Spinner";
 import ChatWindow from "./ChatWindow";
@@ -15,6 +15,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
   const [typingUsers, setTypingUsers] = useState([]);
   const socketRef = useRef();
   const typingTimeoutRef = useRef();
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 700);
 
   useEffect(() => {
     setLoading(true);
@@ -25,10 +26,12 @@ function Chat({ selectedUser, onBack, isMobile }) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-
-    socketRef.current = io("https://tomato-chat-server-y4uh.onrender.com", {
+      
+    const SOCKET_URL = "http://localhost:5000";
+    socketRef.current = io(SOCKET_URL, {
       query: { userId: myId },
     });
+    // console.log('Socket connected as', myId, 'for chat with', selectedUser._id);
 
     socketRef.current.on("private message", (msg) => {
       if (
@@ -36,6 +39,21 @@ function Chat({ selectedUser, onBack, isMobile }) {
         (msg.sender === selectedUser._id && msg.receiver === myId)
       ) {
         setMessages((prev) => [...prev, msg]);
+      }
+    });
+
+    // Listen for messages-read event for real-time seen indicator
+    socketRef.current.on("messages-read", ({ by }) => {
+      // console.log('Received messages-read event:', by, selectedUser._id);
+      // If the selected user is the one who read the messages
+      if (by === selectedUser._id) {
+        setMessages((prevMsgs) =>
+          prevMsgs.map((m) =>
+            m.sender === myId && m.receiver === selectedUser._id && !m.readAt
+              ? { ...m, readAt: new Date().toISOString() }
+              : m
+          )
+        );
       }
     });
 
@@ -47,15 +65,35 @@ function Chat({ selectedUser, onBack, isMobile }) {
       setTypingUsers((prev) => prev.filter((id) => id !== from));
     });
 
+    // Mark messages as read when chat is opened
+    markMessagesAsRead(selectedUser._id).then(() => {
+      fetchMessages(myId, selectedUser._id)
+        .then((msgs) => {
+          // console.log('Fetched messages after marking as read:', msgs);
+          setMessages(msgs);
+        });
+    });
+    if (socketRef.current) {
+      // console.log('Emitting mark-messages-read for', selectedUser._id);
+      socketRef.current.emit("mark-messages-read", { fromUserId: selectedUser._id });
+    }
+
     return () => {
       if (socketRef.current) {
         socketRef.current.off("private message");
         socketRef.current.off("typing");
         socketRef.current.off("stop typing");
+        socketRef.current.off("messages-read");
         socketRef.current.disconnect();
       }
     };
   }, [selectedUser, myId]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth <= 700);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleInputChange = (e) => {
     setMessage(e.target.value);
@@ -105,7 +143,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
 
   return (
     <div className="chat-container">
-      <div className="chat-header">
+      <div className="chat-header" style={{ position: 'relative' }}>
         <button
           onClick={onBack}
           style={{
@@ -129,13 +167,40 @@ function Chat({ selectedUser, onBack, isMobile }) {
             marginRight: 8,
           }}
         />
-        {selectedUser.username}
+        <span style={{ flex: 1 }}>{selectedUser.username}</span>
+        {isMobileView && (
+          <button
+            className="dark-toggle-btn"
+            onClick={() => document.body.classList.toggle("dark-mode")}
+            style={{
+              background: "#23272f",
+              color: "#d2ffd6",
+              border: "1.5px solid #25d366",
+              borderRadius: 12,
+              padding: "2px 4px",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontSize: "0.95em",
+              minWidth: 24,
+              minHeight: 24,
+              width: 24,
+              height: 24,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginLeft: 6,
+            }}
+            aria-label="Toggle dark mode"
+          >
+            <span role="img" aria-label="dark mode">🌙</span>
+          </button>
+        )}
       </div>
       {loading ? (
         <Spinner />
       ) : (
         <>
-          <ChatWindow messages={messages} myId={myId} loading={loading} />
+          <ChatWindow messages={messages} myId={myId} loading={loading} selectedUser={selectedUser} />
           {typingUsers.includes(selectedUser._id) && (
             <div className="typing-indicator-premium">
               <span style={{ fontWeight: 500 }}>{selectedUser.username}</span>
@@ -155,6 +220,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
         onSend={sendMessage}
         onInputChange={handleInputChange}
         onImageSelect={handleImageSelect}
+        sendOnEnter={true}
       />
       {uploading && (
         <div className="upload-indicator">

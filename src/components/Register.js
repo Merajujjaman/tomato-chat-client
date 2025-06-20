@@ -16,7 +16,7 @@ function Register({ onRegister, onShowLogin }) {
     setError("");
     setSuccess("");
     try {
-      await axios.post("https://tomato-chat-server-y4uh.onrender.com/api/auth/register", form);
+      await axios.post("http://localhost:5000/api/auth/register", form);
       setSuccess("Registration successful! You can now log in.");
       setTimeout(() => {
         onRegister();

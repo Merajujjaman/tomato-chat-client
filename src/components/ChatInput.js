@@ -2,11 +2,21 @@ import React, { useState } from "react";
 import ImageUpload from "./ImageUpload";
 import "./ChatInput.css";
 
-export default function ChatInput({ message, setMessage, onSend, onInputChange, onImageSelect }) {
+export default function ChatInput({ message, setMessage, onSend, onInputChange, onImageSelect, sendOnEnter }) {
   const [showImageUpload, setShowImageUpload] = useState(false);
 
   const handleImageUpload = (imageFile) => {
     onImageSelect(imageFile);
+  };
+
+  const handleKeyDown = (e) => {
+    if (sendOnEnter && e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSend(e);
+    } else if (e.key === "Enter" && e.shiftKey) {
+      // Insert newline
+      setMessage((prev) => prev + "\n");
+    }
   };
 
   return (
@@ -26,6 +36,7 @@ export default function ChatInput({ message, setMessage, onSend, onInputChange, 
           value={message}
           onChange={onInputChange}
           placeholder="Type a message..."
+          onKeyDown={handleKeyDown}
         />
         <button className="chat-send-fab" type="submit" aria-label="Send message">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

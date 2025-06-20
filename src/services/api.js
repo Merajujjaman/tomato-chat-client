@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://tomato-chat-server-y4uh.onrender.com/api';
+const API_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -56,6 +56,34 @@ export const uploadImage = async (imageFile, receiverId, content = '') => {
         'Content-Type': 'multipart/form-data'
       } 
     }
+  );
+  return response.data;
+};
+
+export const markMessagesAsRead = async (fromUserId) => {
+  const token = localStorage.getItem("token");
+  const response = await api.post(
+    '/messages/mark-read',
+    { fromUserId },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+export const getUnreadCounts = async () => {
+  const token = localStorage.getItem("token");
+  const response = await api.get(
+    '/messages/unread-counts',
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+export const getLastMessagesPerUser = async () => {
+  const token = localStorage.getItem("token");
+  const response = await api.get(
+    '/messages/last-per-user',
+    { headers: { Authorization: `Bearer ${token}` } }
   );
   return response.data;
 };
