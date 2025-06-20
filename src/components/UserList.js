@@ -15,7 +15,7 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
   useEffect(() => {
     // Fetch all users
     axios
-      .get("http://localhost:5000/api/auth/users", {
+      .get("https://tomato-chat-server-y4uh.onrender.com/api/auth/users", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
       .then((res) => setUsers(res.data))
@@ -38,7 +38,7 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
 
   useEffect(() => {
     // Connect to socket server
-    const socket = io("http://localhost:5000", {
+    const socket = io("https://tomato-chat-server-y4uh.onrender.com", {
       query: { userId: myId },
     });
 
@@ -206,7 +206,7 @@ export default UserList;
 
 //   useEffect(() => {
 //     axios
-//       .get("http://localhost:5000/api/auth/users", {
+//       .get("https://tomato-chat-server-y4uh.onrender.com/api/auth/users", {
 //         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
 //       })
 //       .then((res) => setUsers(res.data));

@@ -27,7 +27,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
       })
       .catch(() => setLoading(false));
       
-    const SOCKET_URL = "http://localhost:5000";
+    const SOCKET_URL = "https://tomato-chat-server-y4uh.onrender.com";
     socketRef.current = io(SOCKET_URL, {
       query: { userId: myId },
     });

@@ -15,7 +15,7 @@ export async function subscribeUserToPush() {
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
-      await fetch('http://localhost:5000/api/subscribe', {
+      await fetch('https://tomato-chat-server-y4uh.onrender.com/api/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
