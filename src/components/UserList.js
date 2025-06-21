@@ -2,16 +2,28 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 import "./UserList.css";
-import { getUnreadCounts, getLastMessagesPerUser } from '../services/api';
+import { getUnreadCounts, getLastMessagesPerUser } from "../services/api";
 import { API_URL, SOCKET_URL } from "../config";
+import ProfileSettings from "./ProfileSettings";
 
-function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, isMobileView }) {
+function UserList({
+  onSelect,
+  selectedUserId,
+  onLogout,
+  darkMode,
+  setDarkMode,
+  isMobileView,
+}) {
   const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
   const [lastMessages, setLastMessages] = useState({});
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const myId = localStorage.getItem("userId")?.toString();
   const myName = localStorage.getItem("username");
+  const myDisplayName = localStorage.getItem("displayName") || myName;
+  const myProfilePicture = localStorage.getItem("profilePicture");
 
   useEffect(() => {
     // Fetch all users
@@ -22,17 +34,33 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
       .then((res) => setUsers(res.data))
       .catch((err) => console.error("Failed to fetch users:", err));
 
+    // Fetch current user profile
+    axios
+      .get(`${API_URL}/auth/profile`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
+      .then((res) => {
+        setCurrentUser(res.data);
+        localStorage.setItem("displayName", res.data.displayName);
+        localStorage.setItem("profilePicture", res.data.profilePicture);
+      })
+      .catch((err) => console.error("Failed to fetch profile:", err));
+
     // Fetch unread counts
     getUnreadCounts().then((counts) => {
       const map = {};
-      counts.forEach((c) => { map[c._id] = c.count; });
+      counts.forEach((c) => {
+        map[c._id] = c.count;
+      });
       setUnreadCounts(map);
     });
 
     // Fetch last messages
     getLastMessagesPerUser().then((lasts) => {
       const map = {};
-      lasts.forEach((item) => { map[item._id] = item.lastMessage; });
+      lasts.forEach((item) => {
+        map[item._id] = item.lastMessage;
+      });
       setLastMessages(map);
     });
   }, []);
@@ -57,12 +85,16 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
     const refreshCountsAndLasts = () => {
       getUnreadCounts().then((counts) => {
         const map = {};
-        counts.forEach((c) => { map[c._id] = c.count; });
+        counts.forEach((c) => {
+          map[c._id] = c.count;
+        });
         setUnreadCounts(map);
       });
       getLastMessagesPerUser().then((lasts) => {
         const map = {};
-        lasts.forEach((item) => { map[item._id] = item.lastMessage; });
+        lasts.forEach((item) => {
+          map[item._id] = item.lastMessage;
+        });
         setLastMessages(map);
       });
     };
@@ -72,6 +104,34 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
     // Clean up
     return () => socket.disconnect();
   }, [myId]);
+
+  const handleProfileUpdate = (profileData) => {
+    setCurrentUser((prev) => ({
+      ...prev,
+      displayName: profileData.displayName,
+      profilePicture: profileData.profilePicture,
+    }));
+    localStorage.setItem("displayName", profileData.displayName);
+    if (profileData.profilePicture) {
+      localStorage.setItem("profilePicture", profileData.profilePicture);
+    }
+
+    // Refresh the users list to show updated profile data
+    axios
+      .get(`${API_URL}/auth/users`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      })
+      .then((res) => setUsers(res.data))
+      .catch((err) => console.error("Failed to fetch users:", err));
+  };
+
+  const getProfileImageUrl = (user) => {
+    if (user.profilePicture) {
+      return user.profilePicture;
+    }
+    const displayName = user.displayName || user.username;
+    return `https://ui-avatars.com/api/?name=${displayName}&background=25d366&color=fff&rounded=true&size=32`;
+  };
 
   // Sort users by last message time (desc)
   const sortedUsers = users
@@ -87,54 +147,76 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
 
   return (
     <div className="user-list-container">
-      <div
-        className="user-list-header"
-        style={{ position: 'relative' }}
-      >
+      <div className="user-list-header" style={{ position: "relative" }}>
         <span style={{ display: "flex", alignItems: "center" }}>
           <img
             className="user-list-avatar"
-            src={`https://ui-avatars.com/api/?name=${myName}&background=25d366&color=fff&rounded=true&size=32`}
-            alt={myName}
+            src={getProfileImageUrl(
+              currentUser || {
+                username: myName,
+                displayName: myDisplayName,
+                profilePicture: myProfilePicture,
+              }
+            )}
+            alt={currentUser?.displayName || myDisplayName}
           />
-          <span className="user-list-username">{myName}</span>
+          <span className="user-list-username">
+            {currentUser?.displayName || myDisplayName}
+          </span>
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobileView ? 4 : 12 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobileView ? 4 : 12,
+          }}
+        >
+          <button
+            onClick={() => setShowProfileSettings(true)}
+            style={{
+              background: "transparent",
+              color: "#fff",
+              border: "none",
+              borderRadius: 16,
+              fontWeight: "bold",
+              cursor: "pointer",
+              fontSize: isMobileView ? "2em" : "2em",
+              transition: "background 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}
+          >
+            {isMobileView ? "⚙️" : "⚙️"}
+          </button>
           {isMobileView && (
             <button
-              className="dark-toggle-btn"
+              // className="dark-toggle-btn"
               onClick={() => setDarkMode((d) => !d)}
               style={{
-                background: darkMode ? "#222c2a" : "#fff",
+                background: "transparent",
                 color: darkMode ? "#d2ffd6" : "#25d366",
-                border: "1.5px solid #25d366",
-                borderRadius: 12,
-                padding: "2px 4px",
-                fontWeight: 600,
                 cursor: "pointer",
-                fontSize: "0.95em",
-                minWidth: 24,
-                minHeight: 24,
-                width: 24,
-                height: 24,
+                fontSize: "2em",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                marginRight: 2,
               }}
               aria-label="Toggle dark mode"
             >
               {darkMode ? "☀️" : "🌙"}
             </button>
           )}
+
           <button
             onClick={onLogout}
             style={{
-              background: "#ff4d4f",
+              // background: "#ff4d4f",
+              background: "transparent",
               color: "#fff",
-              border: "none",
+              border: "1px solid #fff",
               borderRadius: 16,
-              padding: isMobileView ? "6px 10px" : "6px 16px",
+              // padding: isMobileView ? "6px 10px" : "6px 16px",
               fontWeight: "bold",
               cursor: "pointer",
               fontSize: isMobileView ? "0.95em" : "0.95em",
@@ -152,6 +234,7 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
         {sortedUsers.map((user) => {
           const isOnline = onlineUsers.includes(user._id?.toString());
           const unread = unreadCounts[user._id] || 0;
+          const displayName = user.displayName || user.username;
           return (
             <li
               key={user._id}
@@ -162,39 +245,48 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
             >
               <img
                 className="user-list-avatar"
-                src={`https://ui-avatars.com/api/?name=${user.username}&background=25d366&color=fff&rounded=true&size=32`}
-                alt={user.username}
+                src={getProfileImageUrl(user)}
+                alt={displayName}
               />
               <span className="user-list-username">
-                {user.username}
+                {displayName}
                 {isOnline ? (
                   <span style={{ color: "green", marginLeft: "8px" }}>🟢</span>
                 ) : (
                   <span style={{ color: "gray", marginLeft: "8px" }}>⚪</span>
                 )}
                 {unread > 0 && (
-                  <span style={{
-                    background: '#ff4d4f',
-                    color: '#fff',
-                    borderRadius: '12px',
-                    padding: '2px 8px',
-                    fontSize: '0.8em',
-                    marginLeft: 8,
-                    fontWeight: 600
-                  }}>{unread}</span>
+                  <span
+                    style={{
+                      background: "#ff4d4f",
+                      color: "#fff",
+                      borderRadius: "12px",
+                      padding: "2px 8px",
+                      fontSize: "0.8em",
+                      marginLeft: 8,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {unread}
+                  </span>
                 )}
               </span>
             </li>
           );
         })}
       </ul>
+
+      {showProfileSettings && (
+        <ProfileSettings
+          onClose={() => setShowProfileSettings(false)}
+          onProfileUpdate={handleProfileUpdate}
+        />
+      )}
     </div>
   );
 }
 
 export default UserList;
-
-
 
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";

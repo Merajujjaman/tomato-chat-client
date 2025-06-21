@@ -19,6 +19,8 @@ function Login({ onLogin, onShowRegister }) {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("userId", res.data.userId);
+      localStorage.setItem("displayName", res.data.displayName || res.data.username);
+      localStorage.setItem("profilePicture", res.data.profilePicture || "");
       // console.log(res);
       onLogin();
     } catch (err) {
