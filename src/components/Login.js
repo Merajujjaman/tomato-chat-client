@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./AuthForm.css";
+import { API_URL } from "../config";
 
 function Login({ onLogin, onShowRegister }) {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -14,7 +15,7 @@ function Login({ onLogin, onShowRegister }) {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post("https://tomato-chat-server-y4uh.onrender.com/api/auth/login", form);
+      const res = await axios.post(`${API_URL}/auth/login`, form);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("username", res.data.username);
       localStorage.setItem("userId", res.data.userId);

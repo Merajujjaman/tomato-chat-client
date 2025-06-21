@@ -1,9 +1,10 @@
 import axios from 'axios';
-
-const API_URL = 'https://tomato-chat-server-y4uh.onrender.com/api';
+import { API_URL } from "../config";
 
 const api = axios.create({
   baseURL: API_URL,
+  headers: {
+  },
 });
 
 // Global response interceptor for JWT errors

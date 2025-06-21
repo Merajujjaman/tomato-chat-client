@@ -3,6 +3,7 @@ import Chat from "./components/Chat";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import UserList from "./components/UserList";
+import { API_URL } from "./config";
 
 // Replace with your actual VAPID public key (from .env, base64 string)
 const VAPID_PUBLIC_KEY = "BAXfolXTd28T2dqg6qY0bw7KANZQGs4THhP6hYR96SAHCIQDzv_SLymWJmH45dtHi_hd4jZKKq781EGRtwU0lQI";
@@ -15,7 +16,7 @@ export async function subscribeUserToPush() {
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
-      await fetch('https://tomato-chat-server-y4uh.onrender.com/api/subscribe', {
+      await fetch(`${API_URL}/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

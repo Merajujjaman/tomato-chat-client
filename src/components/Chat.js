@@ -5,6 +5,7 @@ import Spinner from "./Spinner";
 import ChatWindow from "./ChatWindow";
 import ChatInput from "./ChatInput";
 import "./Chat.css";
+import { SOCKET_URL } from "../config";
 
 function Chat({ selectedUser, onBack, isMobile }) {
   const myId = localStorage.getItem("userId");
@@ -27,7 +28,6 @@ function Chat({ selectedUser, onBack, isMobile }) {
       })
       .catch(() => setLoading(false));
       
-    const SOCKET_URL = "https://tomato-chat-server-y4uh.onrender.com";
     socketRef.current = io(SOCKET_URL, {
       query: { userId: myId },
     });

@@ -3,6 +3,7 @@ import axios from "axios";
 import { io } from "socket.io-client";
 import "./UserList.css";
 import { getUnreadCounts, getLastMessagesPerUser } from '../services/api';
+import { API_URL, SOCKET_URL } from "../config";
 
 function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, isMobileView }) {
   const [users, setUsers] = useState([]);
@@ -15,7 +16,7 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
   useEffect(() => {
     // Fetch all users
     axios
-      .get("https://tomato-chat-server-y4uh.onrender.com/api/auth/users", {
+      .get(`${API_URL}/auth/users`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       })
       .then((res) => setUsers(res.data))
@@ -38,7 +39,7 @@ function UserList({ onSelect, selectedUserId, onLogout, darkMode, setDarkMode, i
 
   useEffect(() => {
     // Connect to socket server
-    const socket = io("https://tomato-chat-server-y4uh.onrender.com", {
+    const socket = io(SOCKET_URL, {
       query: { userId: myId },
     });
 

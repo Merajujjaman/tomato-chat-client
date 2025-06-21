@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import "./AuthForm.css";
+import { API_URL } from "../config";
 
 function Register({ onRegister, onShowLogin }) {
   const [form, setForm] = useState({ username: "", email: "", password: "" });
@@ -16,7 +17,7 @@ function Register({ onRegister, onShowLogin }) {
     setError("");
     setSuccess("");
     try {
-      await axios.post("https://tomato-chat-server-y4uh.onrender.com/api/auth/register", form);
+      await axios.post(`${API_URL}/auth/register`, form);
       setSuccess("Registration successful! You can now log in.");
       setTimeout(() => {
         onRegister();
