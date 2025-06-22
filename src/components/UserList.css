@@ -53,7 +53,7 @@
     width: auto;
     margin-top: 0;
     font-size: 0.93em;
-    padding: 5px 8px;
+    /* padding: 5px 8px; */
     margin-left: 6px;
     border-radius: 10px;
   }
@@ -96,7 +96,7 @@
   gap: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
   border-bottom: 1.5px solid rgba(34, 211, 102, 0.10);
-  border-radius: 16px 16px 0 0;
+  /* border-radius: 16px 16px 0 0; */
   min-height: 48px;
   background: var(--chat-header-bg, rgba(34, 211, 102, 0.90));
   backdrop-filter: blur(2px);
@@ -125,7 +125,7 @@
   color: #fff;
   border: none;
   border-radius: 16px;
-  padding: 7px 18px;
+  /* padding: 7px 18px; */
   font-weight: bold;
   cursor: pointer;
   font-size: 0.95em;

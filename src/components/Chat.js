@@ -14,6 +14,7 @@ function Chat({ selectedUser, onBack, isMobile }) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(document.body.classList.contains("dark-mode"));
   const socketRef = useRef();
   const typingTimeoutRef = useRef();
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 700);
@@ -141,6 +142,16 @@ function Chat({ selectedUser, onBack, isMobile }) {
     }
   };
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    if (newDarkMode) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+  };
+
   return (
     <div className="chat-container">
       <div className="chat-header" style={{ position: 'relative' }}>
@@ -168,33 +179,30 @@ function Chat({ selectedUser, onBack, isMobile }) {
           }}
         />
         <span style={{ flex: 1 }}>{selectedUser.username}</span>
-        {isMobileView && (
-          <button
-            className="dark-toggle-btn"
-            onClick={() => document.body.classList.toggle("dark-mode")}
-            style={{
-              background: "#23272f",
-              color: "#d2ffd6",
-              border: "1.5px solid #25d366",
-              borderRadius: 12,
-              padding: "2px 4px",
-              fontWeight: 600,
-              cursor: "pointer",
-              fontSize: "0.95em",
-              minWidth: 24,
-              minHeight: 24,
-              width: 24,
-              height: 24,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginLeft: 6,
-            }}
-            aria-label="Toggle dark mode"
-          >
-            <span role="img" aria-label="dark mode">🌙</span>
-          </button>
-        )}
+        <button
+          onClick={toggleDarkMode}
+          style={{
+            background: "transparent",
+            color: "#d2ffd6",
+            border: "none",
+            borderRadius: "50%",
+            cursor: "pointer",
+            fontSize: "1.5em",
+            width: "36px",
+            height: "36px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginLeft: 6,
+            transition: "all 0.3s ease",
+          }}
+          aria-label="Toggle dark mode"
+          title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          <span role="img" aria-label={isDarkMode ? "light mode" : "dark mode"}>
+            {isDarkMode ? "☀️" : "🌙"}
+          </span>
+        </button>
       </div>
       {loading ? (
         <Spinner />
